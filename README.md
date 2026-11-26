@@ -36,3 +36,12 @@ java -Dfile.encoding=UTF-8 --add-exports java.desktop/sun.swing.table=ALL-UNNAME
 ## Built with
 
 Java 8, Java Swing (`JFrame`, `JDialog`, `JTable`, `JOptionPane`, Nimbus Look & Feel), NetBeans Form Editor (`GroupLayout`), and flat-file I/O (`BufferedReader`, `BufferedWriter`, `Scanner`, `Formatter`).
+
+## Author's note
+
+It's me again!
+So, this one is quite hard to find (that's why it took like, a day to find this).
+As always, this one I made it back in first year of university (2023-2024), but in second semester as OOP's class final project, this one it seems to have some small hiccup at frmLogin bc I think I forgor to link it with tblUser.
+As stated in "Built with" section, I used NetBeans (forgot the version during that time) and with, proudly, 0% AI bc of the same reason I stated in my earlier repos (tl;dr - AI not mainstream yet and I still have my pride).
+The same precedures but this time I used Gemini 4 Carbon to get everything I have done in this project into an easily readable for y'all + pushing the git itself so if you wants to see some of my mistakes you can just read the source code yourself or just put them in any AI you use idk but hey I'm stil proud of this project!
+As usual, love y'all, if any of you even read or see this.
