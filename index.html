@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dice Roll &amp; Guessing Game · โปรแกรมทอยลูกเต๋า</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Thai:wght@400;600;700&display=swap">
+<style>
+/* Layout: one reading column; two-package split, original Swing screen walkthrough, playable original-look Swing GUI simulator, class map, code, and bugs left in. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #18202c;
+  --muted: #566375;
+  --line: #d6dde6;
+  --accent: #2b5b9e;
+  --accent-soft: #dde8f8;
+  --teal: #008080;
+  --teal-soft: #d7f2f2;
+  --warn: #b2453b;
+  --warn-soft: #f8e2df;
+  --code-bg: #e8edf3;
+  --shot-bg: #ebf0f5;
+  --display: "Outfit", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", "Noto Sans Thai", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  --swing: "Tahoma", "Noto Sans Thai", "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151d; --surface: #171f2b; --ink: #e5ecf5; --muted: #97a6ba; --line: #283445;
+    --accent: #74a7f2; --accent-soft: #1b2f4d; --teal: #4ad4d4; --teal-soft: #14383b;
+    --warn: #f08a7f; --warn-soft: #42221f; --code-bg: #0c1017; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151d; --surface: #171f2b; --ink: #e5ecf5; --muted: #97a6ba; --line: #283445;
+  --accent: #74a7f2; --accent-soft: #1b2f4d; --teal: #4ad4d4; --teal-soft: #14383b;
+  --warn: #f08a7f; --warn-soft: #42221f; --code-bg: #0c1017; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 920px; margin: 0 auto; padding-block: 48px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 60px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5.5vw, 3.1rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: 1.55rem; font-weight: 800; }
+h3 { font-size: 1.02rem; font-weight: 600; }
+p { margin: 0; max-width: 66ch; }
+section, header { display: flex; flex-direction: column; gap: 18px; }
+.eyebrow { font-family: var(--mono); font-size: 0.76rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lead { font-size: 1.1rem; color: var(--muted); }
+.thai { font-size: 1.05rem; color: var(--muted); font-family: var(--body); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--ink); }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+/* Action buttons & sample logins */
+.open-site { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.open-site a.btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; font-size: 0.92rem; padding: 10px 16px; border-radius: 8px; border: 1px solid transparent; }
+.open-site a.btn.p { background: var(--accent); color: var(--surface); }
+.open-site a.btn.c { background: transparent; color: var(--ink); border-color: var(--line); }
+.open-site a.btn:hover { filter: brightness(1.08); }
+.open-site a.btn:focus-visible, .shot a.url:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.open-site a.btn svg { width: 14px; height: 14px; flex: none; }
+.open-note { font-size: 0.84rem; color: var(--muted); }
+
+.logins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 560px) { .logins { grid-template-columns: minmax(0, 1fr); } }
+.login { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.login .who { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.login .tag { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+.login.t .tag { background: var(--teal-soft); color: var(--ink); }
+.login.m .tag { background: var(--accent-soft); color: var(--ink); }
+.login .where { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); }
+.login dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 0.9rem; }
+.login dt { color: var(--muted); }
+.login dd { margin: 0; font-family: var(--mono); font-size: 0.86rem; overflow-wrap: anywhere; user-select: all; }
+.login p { font-size: 0.82rem; color: var(--muted); }
+
+/* Two packages */
+.portals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 680px) { .portals { grid-template-columns: 1fr; } }
+.portal { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.portal .tag { align-self: flex-start; font-family: var(--mono); font-size: 0.74rem; padding: 3px 9px; border-radius: 999px; }
+.portal.auth .tag { background: var(--teal-soft); color: var(--teal); }
+.portal.game .tag { background: var(--accent-soft); color: var(--accent); }
+.portal ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.portal li { display: grid; grid-template-columns: minmax(0, 10.5em) minmax(0, 1fr); gap: 10px; font-size: 0.92rem; padding-top: 8px; border-top: 1px solid var(--line); }
+.portal li b { font-weight: 600; }
+.portal li span { color: var(--muted); }
+@media (max-width: 420px) { .portal li { grid-template-columns: 1fr; gap: 0; } }
+
+/* Screen-by-screen journey */
+.journey { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; counter-reset: s; }
+.journey li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 14px; counter-increment: s; position: relative; padding-bottom: 18px; }
+.journey li::before { content: counter(s); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-weight: 600; font-size: 0.85rem; background: var(--accent-soft); color: var(--accent); }
+.journey li.auth::before { background: var(--teal-soft); color: var(--teal); }
+.journey li:not(:last-child)::after { content: ""; position: absolute; left: 16px; top: 36px; bottom: 0; width: 2px; background: var(--line); }
+.journey .who { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.journey p { font-size: 0.94rem; color: var(--muted); }
+.journey li > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding-bottom: 14px; }
+
+.shots { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 8px; }
+.shots.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 680px) { .shots.two { grid-template-columns: minmax(0, 1fr); } }
+.shot { margin: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); min-width: 0; display: flex; flex-direction: column; }
+.shot .bar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--line); background: var(--code-bg); }
+.shot .dots { display: flex; gap: 4px; flex: none; }
+.shot .dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: block; }
+.shot .url { font-family: var(--mono); font-size: 0.72rem; color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.shot a.url:hover { text-decoration: underline; }
+.shot .canvas { background: var(--shot-bg); padding: 10px; display: grid; place-items: center; flex: 1; }
+.shot img { display: block; width: auto; max-width: 100%; max-height: 350px; height: auto; }
+.shots.two .shot img { max-height: 330px; }
+.shot figcaption { font-size: 0.8rem; color: var(--muted); padding: 7px 10px; border-top: 1px solid var(--line); background: var(--surface); }
+
+/* Interactive Swing Simulator */
+.sim-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.sim-tab { font: inherit; font-family: var(--mono); font-size: 0.76rem; padding: 5px 10px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+.sim-tab:hover { border-color: var(--accent); color: var(--ink); }
+.sim-tab[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 600; }
+.sim-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sim-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 800px) { .sim-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.sim-stage { background: #ebf0f5; border: 1px solid var(--line); border-radius: 12px; padding: 24px 16px; min-height: 410px; display: grid; place-items: center; position: relative; overflow-x: auto; color: #1b2026; color-scheme: light; }
+
+/* Authentic Swing Undecorated Login/Register Window */
+.sw-undec { width: 356px; max-width: 100%; background: #00cccc; border: 1px solid #00a5a5; box-shadow: 0 12px 28px rgba(15,23,35,0.22); font-family: var(--swing); font-size: 12px; color: #000; padding-bottom: 18px; user-select: none; }
+.sw-undec-top { display: flex; justify-content: flex-end; padding: 7px 10px 10px; }
+.sw-close-img { width: 24px; height: 24px; cursor: pointer; display: block; border: 0; background: transparent; padding: 0; }
+.sw-banner { background: #ffffcc; padding: 10px 16px; text-align: center; font-size: 34px; font-weight: 700; letter-spacing: 0.01em; margin-bottom: 18px; color: #000; line-height: 1.15; }
+.sw-form-body { padding: 0 18px; display: flex; flex-direction: column; gap: 15px; }
+.sw-row { display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 10px; }
+.sw-row.reg { grid-template-columns: 86px minmax(0, 1fr); }
+.sw-row label { font-size: 12px; color: #000; }
+.sw-icon-cell { display: flex; align-items: center; justify-content: center; }
+.sw-tf { width: 100%; height: 30px; padding: 4px 7px; font-family: var(--swing); font-size: 12px; color: #000; background: #fff; border: 1px solid #9ba5b0; border-top-color: #7c8691; border-radius: 3px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.12); }
+.sw-tf:focus { outline: 2px solid #73a4d1; outline-offset: 0; border-color: #4f7da8; }
+.sw-btn-pair { display: flex; justify-content: space-between; gap: 14px; }
+
+/* Authentic Nimbus Button */
+.nb-btn { font-family: var(--swing); font-size: 12px; color: #1a1f24; min-height: 30px; padding: 5px 14px; border-radius: 5px; border: 1px solid #8a95a1;
+  background: linear-gradient(180deg, #f9fafb 0%, #e7ecf0 48%, #d2d9e0 52%, #e4e9ee 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 1px 1px rgba(0,0,0,0.08);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+.nb-btn:hover:not(:disabled) { filter: brightness(1.03); border-color: #6b7a8a; }
+.nb-btn:active:not(:disabled) { background: linear-gradient(180deg, #c6cfd8 0%, #dce2e8 100%); }
+.nb-btn.def { border-color: #5b7da0; background: linear-gradient(180deg, #dce8f5 0%, #bfd3e8 48%, #9eb9d6 52%, #bad0e7 100%); }
+.nb-btn:disabled { opacity: 0.55; cursor: not-allowed; color: #6c757d; }
+.nb-btn img { width: 20px; height: 20px; flex: none; }
+
+/* Authentic Decorated Windows 11 + Nimbus Window */
+.sw-win { width: 396px; max-width: 100%; background: #d6d9df; border: 1px solid #b5bcc6; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 28px rgba(15,23,35,0.2); font-family: var(--swing); font-size: 12px; color: #000; user-select: none; }
+.sw-win.wide { width: 470px; }
+.sw-titlebar { height: 32px; background: #f3f4f6; border-bottom: 1px solid #e0e3e7; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 12px; font-size: 12px; color: #1c2127; }
+.sw-title-l { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.sw-cup { width: 15px; height: 15px; flex: none; }
+.sw-cap-btns { display: flex; align-items: center; gap: 18px; color: #3c424a; font-family: system-ui, sans-serif; font-size: 13px; }
+.sw-cap-x { border: 0; background: transparent; color: #3c424a; font-size: 15px; line-height: 1; padding: 2px 4px; cursor: pointer; border-radius: 4px; }
+.sw-cap-x:hover { background: #e81123; color: #fff; }
+.sw-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+.sw-menu-h1 { font-size: 22px; text-align: center; margin: 4px 0 0; font-weight: 400; }
+.sw-menu-sub { text-align: center; color: #222; margin-bottom: 4px; }
+.sw-menu-stack { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.sw-menu-foot { display: flex; justify-content: space-between; margin-top: 22px; }
+
+.sw-top-input { display: flex; align-items: center; gap: 8px; }
+.sw-top-input label { white-space: nowrap; }
+.sw-status { text-align: center; min-height: 18px; font-size: 12px; color: #111; }
+.sw-dice-row { display: flex; justify-content: center; gap: 16px; }
+.sw-die-box { width: 134px; height: 124px; background: #fff; border: 1px solid #000; display: grid; place-items: center; font-size: 56px; font-family: var(--swing); line-height: 1; color: #000; }
+.sw-guess-row { display: flex; justify-content: center; gap: 16px; }
+.sw-guess-row .nb-btn { width: 134px; }
+.sw-dlg-foot { display: flex; align-items: flex-end; gap: 26px; padding-top: 6px; }
+.sw-dlg-foot .nb-btn.roll { width: 136px; height: 44px; }
+.sw-dlg-foot .nb-btn.back { width: 67px; }
+
+/* JTable look */
+.sw-table-wrap { background: #fff; border: 1px solid #9ba5b0; max-height: 225px; overflow-y: auto; }
+.sw-table { width: 100%; border-collapse: collapse; font-family: var(--swing); font-size: 12px; color: #000; }
+.sw-table th { position: sticky; top: 0; background: linear-gradient(180deg, #f7f8fa 0%, #dfe4ea 100%); border-bottom: 1px solid #9ba5b0; border-right: 1px solid #c5ccd4; padding: 4px 8px; text-align: center; font-weight: 400; color: #111; }
+.sw-table td { padding: 3px 8px; border-right: 1px solid #eef1f4; white-space: nowrap; }
+.sw-table tr:nth-child(even) td { background: #f2f4f7; }
+.sw-table th:last-child, .sw-table td:last-child { border-right: 0; }
+
+/* JOptionPane popup inside stage */
+.sw-modal-mask { position: absolute; inset: 0; background: rgba(15, 23, 35, 0.32); display: grid; place-items: center; padding: 16px; border-radius: 12px; }
+.sw-jop { width: 290px; max-width: 100%; background: #d6d9df; border: 1px solid #9aa4b0; border-radius: 7px; overflow: hidden; box-shadow: 0 10px 26px rgba(0,0,0,0.28); font-family: var(--swing); font-size: 12px; color: #000; }
+.sw-jop-body { padding: 16px; display: flex; align-items: center; gap: 12px; }
+.sw-jop-ico { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none; background: #e8b730; color: #1f1a08; }
+.sw-jop-ico.info { background: #3c82d6; color: #fff; }
+.sw-jop-foot { padding: 0 16px 14px; display: flex; justify-content: center; }
+
+/* Live flat-file inspector */
+.sim-files { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.file-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); overflow: hidden; display: flex; flex-direction: column; }
+.file-card-h { padding: 8px 12px; background: var(--code-bg); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.76rem; }
+.file-card-h span { color: var(--muted); font-size: 0.72rem; }
+.file-card pre { margin: 0; padding: 10px 12px; font-family: var(--mono); font-size: 0.76rem; line-height: 1.55; max-height: 162px; overflow: auto; white-space: pre; }
+.sim-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sim-foot p { font-size: 0.85rem; color: var(--muted); }
+button.ghost { font: inherit; font-size: 0.85rem; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+button.ghost:hover { border-color: var(--accent); }
+button.ghost:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Architecture diagram & files */
+.er { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+.tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 560px) { .tables { grid-template-columns: 1fr; } }
+.t { border-top: 2px solid var(--accent); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.t code { background: transparent; padding: 0; font-weight: 600; font-size: 0.86rem; }
+.t span { font-size: 0.86rem; color: var(--muted); }
+
+/* Skills */
+.skills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; margin: 0; padding: 0; list-style: none; }
+.skills li { display: flex; flex-direction: column; gap: 2px; padding-top: 12px; border-top: 1px solid var(--line); min-width: 0; }
+.skills span { color: var(--muted); font-size: 0.92rem; }
+@media (max-width: 600px) { .skills { grid-template-columns: 1fr; } }
+
+/* Code & file map */
+.snips { display: flex; flex-direction: column; gap: 22px; }
+.snip { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+pre.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 0; overflow-x: auto; font-family: var(--mono); font-size: 0.8rem; line-height: 1.55; }
+.files { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.files table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+.files th, .files td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.files th { font-family: var(--mono); font-weight: 400; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.files tr:last-child td { border-bottom: 0; }
+.files td:first-child { font-family: var(--mono); font-size: 0.82rem; white-space: nowrap; }
+.files td:nth-child(2) { white-space: nowrap; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+
+.improve { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 10px; max-width: 70ch; }
+.improve b { font-weight: 600; }
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 18px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Object-Oriented Programming · Java Swing project</div>
+    <h1>Dice Roll &amp; Guessing Game</h1>
+    <p class="thai">โปรแกรมทอยลูกเต๋า</p>
+    <p class="lead">A desktop GUI application built in Java Swing. Players register or sign in through a custom borderless login window, pick from three dice modes with 6 to 999 sides—rolling one die, rolling two dice with a total, or guessing which hidden die rolled higher—and review past rolls saved to a text log.</p>
+    <div class="chips">
+      <span class="chip">Java 8</span>
+      <span class="chip">Swing (JFrame &amp; JDialog)</span>
+      <span class="chip">Nimbus Look &amp; Feel</span>
+      <span class="chip">NetBeans Form Editor</span>
+      <span class="chip">Flat-file I/O</span>
+    </div>
+    <div class="open-site">
+      <a class="btn p" href="#try-it">Play in the Swing simulator</a>
+      <a class="btn c" href="https://github.com/NhojAnec/dice-game-project/tree/main/Java_FinalProject" target="_blank" rel="noopener">View the Java code on GitHub
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h4v4"/><path d="M13 3L7 9"/><path d="M11 9.5V13H3V5h3.5"/></svg></a>
+    </div>
+    <h3>Sample accounts in <code>user.txt</code></h3>
+    <div class="logins">
+      <div class="login t">
+        <div class="who"><span class="tag">Account #1</span><span class="where">src/user.txt</span></div>
+        <dl>
+          <dt>Display name</dt><dd>admin</dd>
+          <dt>Username</dt><dd>GM</dd>
+          <dt>Password</dt><dd>0101</dd>
+        </dl>
+        <p>Stored on line 1 as <code>1,admin,GM,0101</code>.</p>
+      </div>
+      <div class="login m">
+        <div class="who"><span class="tag">Account #2</span><span class="where">src/user.txt</span></div>
+        <dl>
+          <dt>Display name</dt><dd>Bow Such Wow</dd>
+          <dt>Username</dt><dd>Wow</dd>
+          <dt>Password</dt><dd>Bow</dd>
+        </dl>
+        <p>Stored on line 2 as <code>2,Bow Such Wow,Wow,Bow</code>.</p>
+      </div>
+    </div>
+    <p class="open-note">These are test entries committed inside <code>src/user.txt</code>. Because of a missing flag check in <code>frmLogin.java</code> (listed under Known issues below), any non-empty username and password will also let you in.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">Two packages, two visual styles</div>
+    <h2>How the app is split</h2>
+    <div class="portals">
+      <div class="portal auth">
+        <span class="tag">Default package · src/</span>
+        <ul>
+          <li><b>frmLogin</b><span>Main entry point. Borderless teal &amp; cream window that reads <code>src/user.txt</code> and opens the main menu.</span></li>
+          <li><b>frmRegister</b><span>Matching borderless form that assigns the next numeric ID and appends a CSV row to <code>src/user.txt</code>.</span></li>
+          <li><b>Account &amp; interfaceInfo</b><span>Holds <code>username</code> and <code>displayname</code> on a shared static <code>Account acc</code> object.</span></li>
+          <li><b>tblUser</b><span>An earlier user-directory table screen with a <code>LOGOUT</code> button, kept in <code>src/</code> but unused in the final flow.</span></li>
+        </ul>
+      </div>
+      <div class="portal game">
+        <span class="tag">Main package · src/Main/</span>
+        <ul>
+          <li><b>DiceRollMain</b><span>Thai main menu (<code>โปรแกรมทอยลูกเต๋า</code>) that opens each mode as a modal <code>JDialog</code>.</span></li>
+          <li><b>OneDie</b><span>Rolls one custom die (<code>6–999</code> sides) and logs the number.</span></li>
+          <li><b>TwoDice</b><span>Rolls two custom dice, displays each face plus their sum, and logs the equation.</span></li>
+          <li><b>HigherDice</b><span>Rolls two dice face-down, asks you to guess Left (<code>ซ้าย</code>) or Right (<code>ขวา</code>), and scores Win, Loss or Draw.</span></li>
+          <li><b>History</b><span>Loads <code>src/Main/HistoryLog.txt</code> into a 3-column <code>JTable</code>.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Original Java Swing GUI</div>
+    <h2>Screen by screen</h2>
+    <p>Every screenshot below was captured directly from the compiled Java Swing classes running under the Nimbus Look &amp; Feel, using the project's own <code>user.txt</code> and <code>HistoryLog.txt</code> files.</p>
+    <ol class="journey">
+      <li class="auth"><div>
+        <div class="who">Default package · frmLogin.java</div>
+        <h3>Log in (or jump to Register)</h3>
+        <p><code>frmLogin</code> calls <code>setUndecorated(true)</code> to remove the Windows title bar and draws its own teal (<code>#00CCCC</code>) and pale-yellow (<code>#FFFFCC</code>) header, PNG icons, and a top-right close button. Pressing <kbd>Enter</kbd> triggers <code>btnLogin</code> via <code>getRootPane().setDefaultButton(btnLogin)</code>.</p>
+        <div class="shots two">
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/frmLogin.java" target="_blank" rel="noopener">src/frmLogin.java</a></div>
+            <div class="canvas"><img src="shots/1-login.png" alt="Undecorated teal and yellow LOGIN Java Swing window with user and key icons, username and password boxes, Reset, Login, and REGISTER buttons" width="788" height="712" loading="lazy"></div>
+            <figcaption>The startup screen (<code>main.class=frmLogin</code>). Notice the blue Nimbus tint on the default Login button.</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/frmRegister.java" target="_blank" rel="noopener">src/frmRegister.java</a></div>
+            <div class="canvas"><img src="shots/2-register.png" alt="Undecorated teal and yellow REGISTER Java Swing window with Display Name, Username, and Password fields" width="820" height="726" loading="lazy"></div>
+            <figcaption><code>frmRegister</code> scans <code>user.txt</code> for the highest ID, appends <code>nextId,displayName,username,password</code>, and reopens Login.</figcaption>
+          </figure>
+        </div>
+      </div></li>
+
+      <li><div>
+        <div class="who">Main · DiceRollMain.java</div>
+        <h3>Choose a dice mode</h3>
+        <p>After login, <code>frmLogin</code> disposes itself and opens <code>DiceRollMain</code>. Unlike the login screens, the game screens keep standard window borders and switch to Thai labels. Each game button opens a modal <code>JDialog</code> centered over the menu.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/Main/DiceRollMain.java" target="_blank" rel="noopener">src/Main/DiceRollMain.java</a></div>
+            <div class="canvas"><img src="shots/3-menu.png" alt="Main menu window titled โปรแกรมทอยลูกเต๋า with buttons for single die, two dice, guess higher die, roll history, and exit" width="856" height="664" loading="lazy"></div>
+          </figure>
+        </div>
+      </div></li>
+
+      <li><div>
+        <div class="who">Main · OneDie.java &amp; TwoDice.java</div>
+        <h3>Roll one or two custom-sided dice</h3>
+        <p>Both dialogs check that the side count is an integer between <code>6</code> and <code>999</code>, update the shared <code>DieInfo.DICE</code> instance, display the roll in <code>60pt</code> Tahoma inside bordered white panels, change the button text from <code>ทอย!</code> to <code>ทอยอีกครั้ง</code>, and append a semicolon-separated line to <code>HistoryLog.txt</code>.</p>
+        <div class="shots two">
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/Main/OneDie.java" target="_blank" rel="noopener">src/Main/OneDie.java</a></div>
+            <div class="canvas"><img src="shots/4-one-die.png" alt="Single die dialog showing 20 sides entered and a roll result of 5" width="702" height="718" loading="lazy"></div>
+            <figcaption><code>ทอยลูกเดียว</code> rolling a 20-sided die.</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/Main/TwoDice.java" target="_blank" rel="noopener">src/Main/TwoDice.java</a></div>
+            <div class="canvas"><img src="shots/5-two-dice.png" alt="Two dice dialog showing 12 sides entered, dice results 11 and 1, and sum 12" width="684" height="738" loading="lazy"></div>
+            <figcaption><code>ทอยสองลูก</code> rolling two 12-sided dice and printing <code>ผลรวมคือ 12</code>.</figcaption>
+          </figure>
+        </div>
+      </div></li>
+
+      <li><div>
+        <div class="who">Main · HigherDice.java</div>
+        <h3>Roll hidden dice, then guess Left or Right</h3>
+        <p>Pressing <code>ทอย!</code> rolls both dice behind the scenes with <code>DICE.set2DiceRoll()</code>, blanks both number boxes, disables the roll button, and reveals <code>ซ้าย</code> (Left) and <code>ขวา</code> (Right). Picking a side reveals both numbers, announces Win, Loss, or Draw, and writes <code>(d1:d2) Win/Loss/Draw</code> to <code>HistoryLog.txt</code>.</p>
+        <div class="shots two">
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/Main/HigherDice.java" target="_blank" rel="noopener">src/Main/HigherDice.java (guessing)</a></div>
+            <div class="canvas"><img src="shots/6a-higher-guess.png" alt="Higher dice dialog mid-round with blank boxes, enabled Left and Right buttons, and disabled Roll button" width="684" height="802" loading="lazy"></div>
+            <figcaption>Step 1: dice are rolled in memory; <code>ซ้าย</code> and <code>ขวา</code> appear while <code>ทอย!</code> is disabled.</figcaption>
+          </figure>
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/Main/HigherDice.java" target="_blank" rel="noopener">src/Main/HigherDice.java (revealed)</a></div>
+            <div class="canvas"><img src="shots/6b-higher-result.png" alt="Higher dice dialog after choosing Left, revealing 4 and 1 with congratulatory Thai message" width="684" height="748" loading="lazy"></div>
+            <figcaption>Step 2: choosing Left reveals <code>4</code> vs <code>1</code> (<code>ยินดีด้วย ค่าซ้ายมือสูงกว่า</code>) and re-enables rolling.</figcaption>
+          </figure>
+        </div>
+      </div></li>
+
+      <li><div>
+        <div class="who">Main · History.java</div>
+        <h3>Inspect the roll history</h3>
+        <p><code>History</code> reads every line of <code>src/Main/HistoryLog.txt</code> with a <code>Scanner</code>, splits on <code>;</code>, and adds rows to a 3-column <code>JTable</code> (<code>Username</code>, <code>Type</code>, <code>Result</code>).</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/Main/History.java" target="_blank" rel="noopener">src/Main/History.java</a></div>
+            <div class="canvas"><img src="shots/7-history.png" alt="History dialog table showing past dice rolls loaded from HistoryLog.txt" width="1052" height="710" loading="lazy"></div>
+            <figcaption>Notice row 6 (<code>(14:14) Win</code>) vs later ties (<code>Draw</code>)—an artifact from testing before the tie check was added.</figcaption>
+          </figure>
+        </div>
+      </div></li>
+
+      <li class="auth"><div>
+        <div class="who">Unused screen · tblUser.java</div>
+        <h3>Bonus: the leftover user table window</h3>
+        <p>Still sitting in <code>src/</code> is <code>tblUser.java</code>: a working <code>JFrame</code> that greets <code>"Welcome " + acc.getDisplayname()</code>, loads <code>src/user.txt</code> into a read-only <code>JTable</code> (hiding the 4th password column), and logs back out to <code>frmLogin</code>. Once <code>frmLogin</code> was wired straight to <code>DiceRollMain</code>, nothing opened this window anymore.</p>
+        <div class="shots">
+          <figure class="shot">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span><a class="url" href="https://github.com/NhojAnec/dice-game-project/blob/main/Java_FinalProject/src/tblUser.java" target="_blank" rel="noopener">src/tblUser.java</a></div>
+            <div class="canvas"><img src="shots/8-tbluser.png" alt="Unused tblUser Swing window greeting Welcome Bow Such Wow and listing ID, Display Name, and Username columns" width="1242" height="654" loading="lazy"></div>
+          </figure>
+        </div>
+      </div></li>
+    </ol>
+  </section>
+
+  <section id="try-it">
+    <div class="eyebrow">Try it</div>
+    <h2>Play the Swing GUI in your browser</h2>
+    <p>Click through a working replica of the original Java Swing screens below, using the real icons from <code>src/images/</code> and the exact rules from the Java code—including input checks for <code>6–999</code> sides and live updates to <code>HistoryLog.txt</code> and <code>user.txt</code>.</p>
+
+    <div class="sim-tabs" role="tablist" aria-label="Choose a Swing window">
+      <button class="sim-tab" type="button" role="tab" data-win="login" aria-selected="true">frmLogin</button>
+      <button class="sim-tab" type="button" role="tab" data-win="register" aria-selected="false">frmRegister</button>
+      <button class="sim-tab" type="button" role="tab" data-win="menu" aria-selected="false">DiceRollMain</button>
+      <button class="sim-tab" type="button" role="tab" data-win="onedie" aria-selected="false">OneDie</button>
+      <button class="sim-tab" type="button" role="tab" data-win="twodice" aria-selected="false">TwoDice</button>
+      <button class="sim-tab" type="button" role="tab" data-win="higher" aria-selected="false">HigherDice</button>
+      <button class="sim-tab" type="button" role="tab" data-win="history" aria-selected="false">History</button>
+      <button class="sim-tab" type="button" role="tab" data-win="tbluser" aria-selected="false">tblUser (unused)</button>
+    </div>
+
+    <div class="sim-grid">
+      <div class="sim-stage" id="sim-stage" aria-live="polite"></div>
+      <div class="sim-files">
+        <div class="file-card">
+          <div class="file-card-h"><b>src/Main/HistoryLog.txt</b><span id="log-count"></span></div>
+          <pre id="sim-log-file"></pre>
+        </div>
+        <div class="file-card">
+          <div class="file-card-h"><b>src/user.txt</b><span id="user-count"></span></div>
+          <pre id="sim-user-file"></pre>
+        </div>
+      </div>
+    </div>
+    <div class="sim-foot">
+      <p>Runs locally in your browser. Try entering <code>3</code> or letters for the die sides, or registering a new account and checking <code>tblUser</code>.</p>
+      <button class="ghost" id="sim-reset" type="button">Reset simulator</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Architecture</div>
+    <h2>Classes and flat files</h2>
+    <p>The login forms live in Java's unnamed default package, while the dice menu and game dialogs live in <code>package Main</code>. Shared state inside each half is held on an interface constant.</p>
+    <div class="er">
+<pre class="mermaid">
+classDiagram
+  direction TB
+  class interfaceInfo {
+    &lt;&lt;interface&gt;&gt;
+    +Account acc
+  }
+  class Account {
+    -String username
+    -String displayname
+    +getUsername()
+    +getDisplayname()
+  }
+  class frmLogin {
+    +btnLoginActionPerformed()
+    +btnRegisterActionPerformed()
+  }
+  class frmRegister {
+    -String FILE_NAME = "src/user.txt"
+    +btnRegisterActionPerformed()
+  }
+  class tblUser {
+    -String FILE_NAME = "src/user.txt"
+    +readFromFileToTableModel()
+  }
+  class DieInfo {
+    &lt;&lt;interface&gt;&gt;
+    +Dice DICE
+  }
+  class Dice {
+    -int dieSide
+    -int dieRoll1
+    -int dieRoll2
+    +set2DiceRoll()
+    +getRandomDieRoll()
+  }
+  class DiceRollMain {
+    +btnOneDieActionPerformed()
+    +btnTwoDiceActionPerformed()
+    +btnHigherDiceActionPerformed()
+    +btnHistoryActionPerformed()
+  }
+  class OneDie {
+    +String filename = "src/Main/HistoryLog.txt"
+  }
+  class TwoDice {
+    +String filename = "src/Main/HistoryLog.txt"
+  }
+  class HigherDice {
+    +String filename = "src/Main/HistoryLog.txt"
+    +setGuessBtn()
+    +setDiceResult()
+  }
+  class History {
+    +String FILE_NAME = "src/Main/HistoryLog.txt"
+    +readFromFileToTableModel()
+  }
+
+  interfaceInfo ..&gt; Account : holds
+  frmLogin ..|&gt; interfaceInfo
+  frmRegister ..|&gt; interfaceInfo
+  tblUser ..|&gt; interfaceInfo
+  frmLogin --&gt; frmRegister : opens
+  frmLogin --&gt; DiceRollMain : opens
+  DiceRollMain --&gt; OneDie : modal JDialog
+  DiceRollMain --&gt; TwoDice : modal JDialog
+  DiceRollMain --&gt; HigherDice : modal JDialog
+  DiceRollMain --&gt; History : modal JDialog
+  DieInfo ..&gt; Dice : holds
+  OneDie ..|&gt; DieInfo
+  TwoDice ..|&gt; DieInfo
+  HigherDice ..|&gt; DieInfo
+</pre>
+    </div>
+    <div class="tables">
+      <div class="t"><code>src/user.txt</code><span>Comma-separated user records: <code>id,displayName,username,password</code>. Read by <code>frmLogin</code> and <code>tblUser</code>, appended by <code>frmRegister</code>.</span></div>
+      <div class="t"><code>src/Main/HistoryLog.txt</code><span>Semicolon-separated game log: <code>username;type;result</code>. Appended after every valid roll and loaded into <code>History</code>.</span></div>
+      <div class="t"><code>interfaceInfo.acc</code><span>Static <code>Account</code> object on an interface so <code>frmRegister</code> and <code>tblUser</code> can share the display name without passing constructor arguments.</span></div>
+      <div class="t"><code>DieInfo.DICE</code><span>Static <code>Dice</code> object shared across <code>OneDie</code>, <code>TwoDice</code>, and <code>HigherDice</code> for storing side count and pre-rolled pairs.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">What I practised</div>
+    <h2>Skills used</h2>
+    <ul class="skills">
+      <li><h3>Swing frames and modal dialogs</h3><span><code>JFrame</code> windows for Login, Register, and the main menu, paired with modal <code>JDialog</code> child windows so the menu stays locked behind the active game mode.</span></li>
+      <li><h3>Custom vs look-and-feel styling</h3><span>Undecorated borderless panels with custom colours and PNG icons on the login screens, alongside standard Nimbus widgets on the game dialogs.</span></li>
+      <li><h3>Event-driven UI state</h3><span><code>ActionListener</code> callbacks in <code>HigherDice</code> hide and reveal the Left/Right guess buttons and lock <code>btnRoll</code> mid-round so players cannot re-roll before guessing.</span></li>
+      <li><h3>Classes and interfaces</h3><span>Encapsulating fields with getters and setters in <code>Account</code> and <code>Dice</code>, and implementing <code>interfaceInfo</code> and <code>DieInfo</code> across forms.</span></li>
+      <li><h3>Number and range validation</h3><span><code>Integer.parseInt</code> inside <code>try / catch (NumberFormatException)</code> plus bounds checks (<code>6–999</code>) that show Thai <code>JOptionPane</code> warnings on bad input.</span></li>
+      <li><h3>Flat-file reading, appending, and tables</h3><span>Combining <code>BufferedReader</code>, <code>FileWriter(..., true)</code>, <code>Scanner</code>, and <code>Formatter</code> to persist accounts and populate Swing <code>DefaultTableModel</code> views.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="eyebrow">Inside the code</div>
+    <h2>Key parts</h2>
+    <div class="snips">
+      <div class="snip">
+        <h3>Rolling custom-sided dice (<code>Main/Dice.java</code>)</h3>
+        <p><code>Dice</code> supports both one-off random rolls (used by <code>OneDie</code> and <code>TwoDice</code>) and storing a hidden pair ahead of time so <code>HigherDice</code> can compare them when the player clicks Left or Right.</p>
+<pre class="code">public void set2DiceRoll() {
+    this.dieRoll1 = (int) (Math.random() * (this.dieSide - 1 + 1) + 1);
+    this.dieRoll2 = (int) (Math.random() * (this.dieSide - 1 + 1) + 1);
+}
+
+public int getRandomDieRoll() {
+    return (int) (Math.random() * (this.dieSide - 1 + 1) + 1);
+}</pre>
+      </div>
+      <div class="snip">
+        <h3>Locking the roll button until the player guesses (<code>Main/HigherDice.java</code>)</h3>
+        <p>Two small helper methods flip the dialog between "waiting for a Left/Right guess" and "showing the result".</p>
+<pre class="code">public void setGuessBtn() {
+    btnLeft.setVisible(true);
+    btnRight.setVisible(true);
+    btnRoll.setEnabled(false);
+}
+
+public void setDiceResult() {
+    btnLeft.setVisible(false);
+    btnRight.setVisible(false);
+    btnRoll.setEnabled(true);
+    btnRoll.setText("ทอยอีกครั้ง");
+}</pre>
+      </div>
+      <div class="snip">
+        <h3>Appending rolls and loading the history table (<code>OneDie.java</code> &amp; <code>History.java</code>)</h3>
+        <p>Each game dialog appends one semicolon-delimited line to <code>HistoryLog.txt</code>; <code>History</code> splits each line back into a 3-column <code>DefaultTableModel</code> row.</p>
+<pre class="code">// OneDie.java — appending a roll
+BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
+String oneD = String.format(username + ";" + title + ";" + res + "\n");
+writer.write(oneD);
+writer.close();
+
+// History.java — populating the JTable
+Scanner sc = new Scanner(myFile);
+while (sc.hasNextLine()) {
+    String line = sc.nextLine();
+    if (line != null &amp;&amp; !line.equals("")) {
+        String[] row = line.split(";");
+        dtm.addRow(row);
+    }
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Project map</div>
+    <h2>Main files</h2>
+    <div class="files"><table>
+      <thead><tr><th>File</th><th>Package</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>src/frmLogin.java</td><td>(default)</td><td>Startup login screen; checks empty fields, scans <code>user.txt</code>, and opens <code>DiceRollMain</code></td></tr>
+        <tr><td>src/frmRegister.java</td><td>(default)</td><td>Registration form; computes <code>nextId</code> and appends new accounts to <code>user.txt</code></td></tr>
+        <tr><td>src/Account.java</td><td>(default)</td><td>Model class storing <code>username</code> and <code>displayname</code></td></tr>
+        <tr><td>src/interfaceInfo.java</td><td>(default)</td><td>Interface holding shared <code>Account acc = new Account()</code></td></tr>
+        <tr><td>src/tblUser.java</td><td>(default)</td><td>Unused Swing table screen listing <code>ID</code>, <code>Display Name</code>, and <code>Username</code> from <code>user.txt</code></td></tr>
+        <tr><td>src/user.txt</td><td>—</td><td>CSV flat file with 13 test user accounts</td></tr>
+        <tr><td>src/Main/DiceRollMain.java</td><td>Main</td><td>Main menu frame launching the three dice dialogs and history viewer</td></tr>
+        <tr><td>src/Main/Dice.java</td><td>Main</td><td>Random roll generator and state holder for 1 or 2 dice</td></tr>
+        <tr><td>src/Main/DieInfo.java</td><td>Main</td><td>Interface holding shared <code>Dice DICE = new Dice()</code></td></tr>
+        <tr><td>src/Main/OneDie.java</td><td>Main</td><td>Single-die dialog (<code>6–999</code> sides)</td></tr>
+        <tr><td>src/Main/TwoDice.java</td><td>Main</td><td>Two-dice dialog showing both rolls and their sum</td></tr>
+        <tr><td>src/Main/HigherDice.java</td><td>Main</td><td>Two-dice guessing game (Left vs Right, Win / Loss / Draw)</td></tr>
+        <tr><td>src/Main/History.java</td><td>Main</td><td>Roll history <code>JTable</code> dialog backed by <code>HistoryLog.txt</code></td></tr>
+        <tr><td>src/Main/PersonLog.java</td><td>Main</td><td>Commented-out draft model class for history rows</td></tr>
+        <tr><td>src/Main/HistoryLog.txt</td><td>—</td><td>Semicolon-separated log of 47 recorded test rolls</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Known issues</div>
+    <h2>Problems and bugs I left in</h2>
+    <p>I closed the project with these still in the code. Just like my other coursework archives, they are documented here as they were submitted rather than patched afterwards.</p>
+    <h3>Bugs</h3>
+    <ul class="improve">
+      <li><b>Any non-empty login succeeds.</b> In <code>frmLogin.java</code>, the <code>while</code> loop reads <code>src/user.txt</code> and <code>break</code>s when the username and password match, but never sets a <code>boolean</code> flag. When the loop finishes after reaching the end of the file, the code still shows <code>"Login successful!"</code> and opens <code>DiceRollMain</code>.</li>
+      <li><b>Every roll is logged as <code>"user"</code>.</b> Because <code>Account</code> and <code>interfaceInfo</code> sit in Java's unnamed default package, classes inside <code>package Main</code> cannot import them. As a workaround, <code>OneDie</code>, <code>TwoDice</code>, and <code>HigherDice</code> hardcode <code>String username = "user";</code>, and <code>frmLogin</code> never stores <code>displayNameFromFile</code> into <code>acc</code>.</li>
+      <li><b>The Exit button quits the whole app instead of returning to Login.</b> <code>DiceRollMain.java</code> still has a teammate comment (<code>//TEMP รบกวนเขีบนโต้ดกลับเข้าหน้าล็อกอินด้วย</code> — "please write code to go back to the login page") above <code>System.exit(0);</code>, blocked by the same default-package import rule that prevented <code>Main</code> from referencing <code>frmLogin</code>.</li>
+      <li><b>Registration allows duplicate usernames.</b> <code>frmRegister.java</code> reads <code>user.txt</code> to calculate <code>nextId</code>, but doesn't check whether the chosen username already exists—which is why <code>123</code> and <code>22</code> appear twice in <code>user.txt</code>.</li>
+    </ul>
+    <h3>Other quirks</h3>
+    <ul class="improve">
+      <li><b>Leftover classes in <code>src/</code>.</b> <code>tblUser.java</code> is a complete user-list window with a working <code>LOGOUT</code> button that nothing opens, and <code>PersonLog.java</code> is commented out from top to bottom.</li>
+      <li><b>Editable history cells rewrite the log on close.</b> Unlike <code>tblUser</code>, <code>History.java</code> leaves <code>JTable</code> cells editable and rewrites <code>HistoryLog.txt</code> from the table model inside <code>formWindowClosing</code>.</li>
+      <li><b>Plain-text passwords and delimiter splitting.</b> Passwords are stored unhashed in <code>user.txt</code>, and typing a comma in registration or a semicolon in a log field would split into extra columns.</li>
+      <li><b>JDK 8 internal header renderer and relative paths.</b> <code>History.java</code> imports <code>sun.swing.table.DefaultTableCellHeaderRenderer</code> (which requires <code>--add-exports</code> on JDK 9+), and paths like <code>"src/user.txt"</code> assume the working directory is the project root.</li>
+    </ul>
+  </section>
+
+  <footer>Dice Roll &amp; Guessing Game (โปรแกรมทอยลูกเต๋า) · Java Swing coursework project</footer>
+</div>
+
+<script>
+(() => {
+  const ICONS = {
+    close: "Java_FinalProject/src/images/close-window-24.png",
+    user: "Java_FinalProject/src/images/user-2-24.png",
+    key: "Java_FinalProject/src/images/key-4-24.png",
+    reset: "Java_FinalProject/src/images/undo-2-24.png",
+    login: "Java_FinalProject/src/images/login-24.png",
+    addUser: "Java_FinalProject/src/images/add-user-3-24.png",
+    check: "Java_FinalProject/src/images/check.png"
+  };
+
+  const INITIAL_USERS = [
+    "1,admin,GM,0101",
+    "2,Bow Such Wow,Wow,Bow",
+    "3,Will,Will123,BigWil",
+    "4,22,qwe,1234",
+    "5,123,123,123",
+    "12,wahaha,test,1234"
+  ];
+
+  const INITIAL_LOGS = [
+    "user;ทอยลูกเดียวหน้า 444;43",
+    "user;ทอยสองลูกหน้า 225;(109 + 65) = 174",
+    "user;ทายลูกไหนสูงกว่าหน้า 24;(11:15) Loss",
+    "user;ทายลูกไหนสูงกว่าหน้า 24;(14:14) Win",
+    "user;ทายลูกไหนสูงกว่าหน้า 6;(5:2) Win",
+    "user;ทายลูกไหนสูงกว่าหน้า 6;(5:5) Draw",
+    "user;ทอยลูกเดียวหน้า 999;778",
+    "user;ทอยสองลูกหน้า 6;(2 + 4) = 6"
+  ];
+
+  let state;
+
+  function initState() {
+    state = {
+      win: "login",
+      accDisplayName: "",
+      users: [...INITIAL_USERS],
+      logs: [...INITIAL_LOGS],
+      dialog: null,
+      loginForm: { us: "", ps: "" },
+      regForm: { ds: "", us: "", ps: "" },
+      one: { sides: "20", num: "", msg: "", rolled: false },
+      two: { sides: "12", n1: "", n2: "", msg: "", sum: "", rolled: false },
+      high: { sides: "6", n1: "", n2: "", secret1: 0, secret2: 0, msg: "", guessing: false, rolledOnce: false }
+    };
+  }
+
+  const stage = document.getElementById("sim-stage");
+  const logPre = document.getElementById("sim-log-file");
+  const userPre = document.getElementById("sim-user-file");
+  const logCount = document.getElementById("log-count");
+  const userCount = document.getElementById("user-count");
+  const tabs = document.querySelectorAll(".sim-tab");
+
+  function h(tag, attrs, children) {
+    const el = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (k === "className") el.className = v;
+        else if (k === "textContent") el.textContent = v;
+        else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2).toLowerCase(), v);
+        else if (v !== false && v != null) el.setAttribute(k, v === true ? "" : v);
+      }
+    }
+    for (const c of children || []) {
+      if (c == null || c === false) continue;
+      el.append(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
+
+  function cupSvg() {
+    const span = document.createElement("span");
+    span.innerHTML = '<svg class="sw-cup" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6.5 2c1 1.2-1 2.2 0 3.4M9.5 1.5c1 1.4-1 2.4 0 3.8" stroke="#e76f00" stroke-width="1.4" stroke-linecap="round"/><rect x="3" y="6.5" width="8.5" height="5.5" rx="2" fill="#5382a1"/><path d="M11.5 7.5h1.3a1.5 1.5 0 0 1 0 3h-1.3" stroke="#5382a1" stroke-width="1.4"/><path d="M2 14h11" stroke="#5382a1" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    return span.firstElementChild;
+  }
+
+  function showPopup(title, message, kind, onOk) {
+    state.dialog = { title, message, kind: kind || "warn", onOk };
+    render();
+  }
+
+  function switchWin(w) {
+    state.win = w;
+    state.dialog = null;
+    render();
+  }
+
+  function randDie(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+  }
+
+  function parseSides(raw) {
+    const trimmed = raw.trim();
+    if (!/^-?\d+$/.test(trimmed)) {
+      showPopup("Warning", "หน้าลูกเต๋าต้องเป็นตัวเลขเท่านั้น", "warn");
+      return null;
+    }
+    const n = parseInt(trimmed, 10);
+    if (n === 0) {
+      showPopup("Warning", "กรุณาใส่จำนวนหน้าลูกเต๋า", "warn");
+      return null;
+    }
+    if (n < 6 || n > 999) {
+      showPopup("Warning", "จำนวนหน้าลูกเต๋าต้องไม่น้อยกว่า 6 หรือมากกว่า 999", "warn");
+      return null;
+    }
+    return n;
+  }
+
+  function renderLogin() {
+    const usIn = h("input", { className: "sw-tf", type: "text", value: state.loginForm.us, "aria-label": "Username", oninput: e => { state.loginForm.us = e.target.value; } });
+    const psIn = h("input", { className: "sw-tf", type: "password", value: state.loginForm.ps, "aria-label": "Password", oninput: e => { state.loginForm.ps = e.target.value; } });
+
+    function doLogin() {
+      const us = state.loginForm.us.trim();
+      const ps = state.loginForm.ps.trim();
+      if (us === "") {
+        showPopup("Login System", "Username cannot be empty", "info");
+        return;
+      }
+      if (ps === "") {
+        showPopup("Login System", "Password cannot be empty", "info");
+        return;
+      }
+      let matched = false;
+      for (const line of state.users) {
+        const parts = line.split(",");
+        if (parts.length >= 4 && us === parts[2].trim() && ps === parts[3].trim()) {
+          matched = true;
+          break;
+        }
+      }
+      state.loginForm = { us: "", ps: "" };
+      const extra = matched ? "" : " (Passed via frmLogin's missing flag check!)";
+      showPopup("SUCCESS!!", "Login successful!" + extra, "check", () => {
+        state.win = "menu";
+      });
+    }
+
+    [usIn, psIn].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); }));
+
+    return h("div", { className: "sw-undec" }, [
+      h("div", { className: "sw-undec-top" }, [
+        h("button", { className: "sw-close-img", type: "button", title: "Close (System.exit)", onclick: () => showPopup("System.exit(0)", "In the desktop app, clicking the top-right X exits Java.", "info") }, [
+          h("img", { src: ICONS.close, alt: "Close" })
+        ])
+      ]),
+      h("div", { className: "sw-banner", textContent: "LOGIN" }),
+      h("div", { className: "sw-form-body" }, [
+        h("div", { className: "sw-row" }, [
+          h("div", { className: "sw-icon-cell" }, [h("img", { src: ICONS.user, alt: "" })]),
+          usIn
+        ]),
+        h("div", { className: "sw-row" }, [
+          h("div", { className: "sw-icon-cell" }, [h("img", { src: ICONS.key, alt: "" })]),
+          psIn
+        ]),
+        h("div", { className: "sw-row" }, [
+          h("span"),
+          h("div", { className: "sw-btn-pair" }, [
+            h("button", { className: "nb-btn", type: "button", style: "width:102px", onclick: () => { state.loginForm = { us: "", ps: "" }; render(); } }, [
+              h("img", { src: ICONS.reset, alt: "" }), "Reset"
+            ]),
+            h("button", { className: "nb-btn def", type: "button", style: "width:102px", onclick: doLogin }, [
+              h("img", { src: ICONS.login, alt: "" }), "Login"
+            ])
+          ])
+        ]),
+        h("div", { className: "sw-row" }, [
+          h("span"),
+          h("button", { className: "nb-btn", type: "button", style: "width:100%", onclick: () => switchWin("register") }, [
+            h("img", { src: ICONS.addUser, alt: "" }), "REGISTER"
+          ])
+        ])
+      ])
+    ]);
+  }
+
+  function renderRegister() {
+    const dsIn = h("input", { className: "sw-tf", type: "text", value: state.regForm.ds, oninput: e => { state.regForm.ds = e.target.value; } });
+    const usIn = h("input", { className: "sw-tf", type: "text", value: state.regForm.us, oninput: e => { state.regForm.us = e.target.value; } });
+    const psIn = h("input", { className: "sw-tf", type: "password", value: state.regForm.ps, oninput: e => { state.regForm.ps = e.target.value; } });
+
+    function doRegister() {
+      const ds = state.regForm.ds.trim();
+      const us = state.regForm.us.trim();
+      const ps = state.regForm.ps.trim();
+      if (ds === "") return showPopup("Registration System", "Display name cannot be empty", "info");
+      if (us === "") return showPopup("Registration System", "Username cannot be empty", "info");
+      if (ps === "") return showPopup("Registration System", "Password cannot be empty", "info");
+
+      let nextId = 1;
+      for (const line of state.users) {
+        const id = parseInt(line.split(",")[0].trim(), 10);
+        if (!Number.isNaN(id)) nextId = Math.max(nextId, id + 1);
+      }
+      state.users.push(nextId + "," + ds + "," + us + "," + ps);
+      state.accDisplayName = ds;
+      state.regForm = { ds: "", us: "", ps: "" };
+      showPopup("Registration System", "Registration successful", "info", () => {
+        state.win = "login";
+      });
+    }
+
+    [dsIn, usIn, psIn].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") doRegister(); }));
+
+    return h("div", { className: "sw-undec", style: "width:384px" }, [
+      h("div", { className: "sw-undec-top" }, [
+        h("button", { className: "sw-close-img", type: "button", title: "Back to Login", onclick: () => switchWin("login") }, [
+          h("img", { src: ICONS.close, alt: "Close" })
+        ])
+      ]),
+      h("div", { className: "sw-banner", textContent: "REGISTER" }),
+      h("div", { className: "sw-form-body" }, [
+        h("div", { className: "sw-row reg" }, [h("label", { textContent: "Display Name" }), dsIn]),
+        h("div", { className: "sw-row reg" }, [h("label", { textContent: "Username" }), usIn]),
+        h("div", { className: "sw-row reg" }, [h("label", { textContent: "Password" }), psIn]),
+        h("div", { className: "sw-row reg" }, [
+          h("span"),
+          h("div", { className: "sw-btn-pair" }, [
+            h("button", { className: "nb-btn", type: "button", style: "width:102px", onclick: () => { state.regForm = { ds: "", us: "", ps: "" }; render(); } }, [
+              h("img", { src: ICONS.reset, alt: "" }), "Reset"
+            ]),
+            h("button", { className: "nb-btn def", type: "button", onclick: doRegister }, [
+              h("img", { src: ICONS.addUser, alt: "" }), "REGISTER"
+            ])
+          ])
+        ])
+      ])
+    ]);
+  }
+
+  function frameShell(title, isFrame, wide, onClose, bodyChildren) {
+    return h("div", { className: "sw-win" + (wide ? " wide" : "") }, [
+      h("div", { className: "sw-titlebar" }, [
+        h("div", { className: "sw-title-l" }, [
+          isFrame ? cupSvg() : null,
+          h("span", { textContent: title })
+        ]),
+        h("div", { className: "sw-cap-btns" }, [
+          isFrame ? h("span", { "aria-hidden": "true", textContent: "—" }) : null,
+          isFrame ? h("span", { "aria-hidden": "true", textContent: "▢" }) : null,
+          h("button", { className: "sw-cap-x", type: "button", "aria-label": "Close window", onclick: onClose, textContent: "×" })
+        ])
+      ]),
+      h("div", { className: "sw-body" }, bodyChildren)
+    ]);
+  }
+
+  function renderMenu() {
+    return frameShell("โปรแกรมทอยลูกเต๋า", true, false, () => switchWin("login"), [
+      h("div", { className: "sw-menu-h1", textContent: "ยินดีต้อนรับสู่โปรแกรมทอยลูกเต๋า" }),
+      h("div", { className: "sw-menu-sub", textContent: "กรุณาเลือกลูกเต๋าที่ต้องการเล่น" }),
+      h("div", { className: "sw-menu-stack" }, [
+        h("button", { className: "nb-btn", type: "button", style: "width:116px", onclick: () => switchWin("onedie"), textContent: "ทอยลูกเดียว" }),
+        h("button", { className: "nb-btn", type: "button", style: "width:116px", onclick: () => switchWin("twodice"), textContent: "ทอยสองลูก" }),
+        h("button", { className: "nb-btn", type: "button", style: "width:310px;max-width:100%", onclick: () => switchWin("higher"), textContent: "ทอยสองลูก แล้วทายว่าลูกไหนค่าสูงกว่า" })
+      ]),
+      h("div", { className: "sw-menu-foot" }, [
+        h("button", { className: "nb-btn", type: "button", onclick: () => switchWin("history"), textContent: "ประวัติการทอย" }),
+        h("button", { className: "nb-btn", type: "button", onclick: () => showPopup("ออกจากโปรแกรม", "DiceRollMain calls System.exit(0) here (with a TEMP comment to return to frmLogin).", "info", () => { state.win = "login"; }), textContent: "ออกจากโปรแกรม" })
+      ])
+    ]);
+  }
+
+  function renderOneDie() {
+    const s = state.one;
+    const tf = h("input", { className: "sw-tf", type: "text", value: s.sides, "aria-label": "Die sides (6-999)", oninput: e => { s.sides = e.target.value; } });
+    function roll() {
+      const n = parseSides(s.sides);
+      if (n === null) return;
+      const val = randDie(n);
+      s.num = String(val);
+      s.msg = "คุณทอยได้ " + val;
+      s.rolled = true;
+      state.logs.push("user;ทอยลูกเดียวหน้า " + s.sides.trim() + ";" + s.num);
+      render();
+    }
+    tf.addEventListener("keydown", e => { if (e.key === "Enter") roll(); });
+
+    return frameShell("ทอยลูกเดียว", false, false, () => switchWin("menu"), [
+      h("div", { className: "sw-top-input" }, [
+        h("label", { textContent: "กรุณาใส่จำนวนหน้าของลูกเต๋า (6-999)" }),
+        tf
+      ]),
+      h("div", { className: "sw-status", textContent: s.msg }),
+      h("div", { className: "sw-dice-row" }, [
+        h("div", { className: "sw-die-box", textContent: s.num })
+      ]),
+      h("div", { className: "sw-dlg-foot" }, [
+        h("button", { className: "nb-btn back", type: "button", onclick: () => switchWin("menu"), textContent: "กลับ" }),
+        h("button", { className: "nb-btn def roll", type: "button", onclick: roll, textContent: s.rolled ? "ทอยอีกครั้ง" : "ทอย!" })
+      ])
+    ]);
+  }
+
+  function renderTwoDice() {
+    const s = state.two;
+    const tf = h("input", { className: "sw-tf", type: "text", value: s.sides, "aria-label": "Die sides (6-999)", oninput: e => { s.sides = e.target.value; } });
+    function roll() {
+      const n = parseSides(s.sides);
+      if (n === null) return;
+      const d1 = randDie(n);
+      const d2 = randDie(n);
+      s.n1 = String(d1);
+      s.n2 = String(d2);
+      s.msg = "คุณทอยได้ " + d1 + " และ " + d2;
+      s.sum = "ผลรวมคือ " + (d1 + d2);
+      s.rolled = true;
+      state.logs.push("user;ทอยสองลูกหน้า " + s.sides.trim() + ";(" + d1 + " + " + d2 + ") = " + (d1 + d2));
+      render();
+    }
+    tf.addEventListener("keydown", e => { if (e.key === "Enter") roll(); });
+
+    return frameShell("ทอยสองลูก", false, false, () => switchWin("menu"), [
+      h("div", { className: "sw-top-input" }, [
+        h("label", { textContent: "กรุณาใส่จำนวนหน้าของลูกเต๋า (6-999)" }),
+        tf
+      ]),
+      h("div", { className: "sw-status", textContent: s.msg }),
+      h("div", { className: "sw-dice-row" }, [
+        h("div", { className: "sw-die-box", textContent: s.n1 }),
+        h("div", { className: "sw-die-box", textContent: s.n2 })
+      ]),
+      h("div", { className: "sw-status", textContent: s.sum }),
+      h("div", { className: "sw-dlg-foot" }, [
+        h("button", { className: "nb-btn back", type: "button", onclick: () => switchWin("menu"), textContent: "กลับ" }),
+        h("button", { className: "nb-btn def roll", type: "button", onclick: roll, textContent: s.rolled ? "ทอยอีกครั้ง" : "ทอย!" })
+      ])
+    ]);
+  }
+
+  function renderHigher() {
+    const s = state.high;
+    const tf = h("input", { className: "sw-tf", type: "text", value: s.sides, "aria-label": "Die sides (6-999)", oninput: e => { s.sides = e.target.value; } });
+
+    function startRoll() {
+      if (s.guessing) return;
+      const n = parseSides(s.sides);
+      if (n === null) return;
+      s.secret1 = randDie(n);
+      s.secret2 = randDie(n);
+      s.n1 = "";
+      s.n2 = "";
+      s.msg = "ลูกเต๋าลูกไหนมีค่าสูงกว่า";
+      s.guessing = true;
+      render();
+    }
+
+    function pick(side) {
+      const d1 = s.secret1, d2 = s.secret2;
+      s.n1 = String(d1);
+      s.n2 = String(d2);
+      let outcome;
+      if (d1 === d2) {
+        s.msg = "ยินดีด้วย ค่าเท่ากัน";
+        outcome = "Draw";
+      } else if (side === "L") {
+        if (d2 > d1) { s.msg = "เสียใจด้วย ค่าขวามือสูงกว่า"; outcome = "Loss"; }
+        else { s.msg = "ยินดีด้วย ค่าซ้ายมือสูงกว่า"; outcome = "Win"; }
+      } else {
+        if (d2 < d1) { s.msg = "เสียใจด้วย ค่าซ้ายมือสูงกว่า"; outcome = "Loss"; }
+        else { s.msg = "ยินดีด้วย ค่าขวามือสูงกว่า"; outcome = "Win"; }
+      }
+      s.guessing = false;
+      s.rolledOnce = true;
+      state.logs.push("user;ทายลูกไหนสูงกว่าหน้า " + s.sides.trim() + ";(" + d1 + ":" + d2 + ") " + outcome);
+      render();
+    }
+
+    tf.addEventListener("keydown", e => { if (e.key === "Enter" && !s.guessing) startRoll(); });
+
+    return frameShell("ทายลูกไหนสูงกว่า", false, false, () => switchWin("menu"), [
+      h("div", { className: "sw-top-input" }, [
+        h("label", { textContent: "กรุณาใส่จำนวนหน้าของลูกเต๋า (6-999)" }),
+        tf
+      ]),
+      h("div", { className: "sw-status", textContent: s.msg }),
+      h("div", { className: "sw-dice-row" }, [
+        h("div", { className: "sw-die-box", textContent: s.n1 }),
+        h("div", { className: "sw-die-box", textContent: s.n2 })
+      ]),
+      s.guessing ? h("div", { className: "sw-guess-row" }, [
+        h("button", { className: "nb-btn", type: "button", onclick: () => pick("L"), textContent: "ซ้าย" }),
+        h("button", { className: "nb-btn", type: "button", onclick: () => pick("R"), textContent: "ขวา" })
+      ]) : null,
+      h("div", { className: "sw-dlg-foot" }, [
+        h("button", { className: "nb-btn back", type: "button", onclick: () => switchWin("menu"), textContent: "กลับ" }),
+        h("button", { className: "nb-btn def roll", type: "button", disabled: s.guessing, onclick: startRoll, textContent: (!s.guessing && s.rolledOnce) ? "ทอยอีกครั้ง" : "ทอย!" })
+      ])
+    ]);
+  }
+
+  function renderHistory() {
+    const rows = state.logs.map(line => {
+      const [u = "", t = "", r = ""] = line.split(";");
+      return h("tr", {}, [h("td", { textContent: u }), h("td", { textContent: t }), h("td", { textContent: r })]);
+    });
+    return frameShell("ประวัติการทอย", false, true, () => switchWin("menu"), [
+      h("div", { className: "sw-table-wrap" }, [
+        h("table", { className: "sw-table" }, [
+          h("thead", {}, [h("tr", {}, [h("th", { textContent: "Username" }), h("th", { textContent: "Type" }), h("th", { textContent: "Result" })])]),
+          h("tbody", {}, rows)
+        ])
+      ])
+    ]);
+  }
+
+  function renderTblUser() {
+    const rows = state.users.map(line => {
+      const [id = "", ds = "", us = ""] = line.split(",");
+      return h("tr", {}, [h("td", { textContent: id }), h("td", { textContent: ds }), h("td", { textContent: us })]);
+    });
+    return frameShell("", true, true, () => switchWin("login"), [
+      h("div", { style: "display:flex;justify-content:space-between;align-items:center;" }, [
+        h("button", { className: "nb-btn", type: "button", onclick: () => switchWin("login"), textContent: "LOGOUT" }),
+        h("span", { textContent: "Welcome " + state.accDisplayName })
+      ]),
+      h("div", { className: "sw-table-wrap" }, [
+        h("table", { className: "sw-table" }, [
+          h("thead", {}, [h("tr", {}, [h("th", { textContent: "ID" }), h("th", { textContent: "Display Name" }), h("th", { textContent: "Username" })])]),
+          h("tbody", {}, rows)
+        ])
+      ])
+    ]);
+  }
+
+  function render() {
+    tabs.forEach(t => t.setAttribute("aria-selected", String(t.dataset.win === state.win)));
+    stage.replaceChildren();
+
+    let view;
+    if (state.win === "login") view = renderLogin();
+    else if (state.win === "register") view = renderRegister();
+    else if (state.win === "menu") view = renderMenu();
+    else if (state.win === "onedie") view = renderOneDie();
+    else if (state.win === "twodice") view = renderTwoDice();
+    else if (state.win === "higher") view = renderHigher();
+    else if (state.win === "history") view = renderHistory();
+    else view = renderTblUser();
+
+    stage.append(view);
+
+    if (state.dialog) {
+      const d = state.dialog;
+      const okBtn = h("button", { className: "nb-btn def", type: "button", style: "min-width:68px", onclick: () => {
+        const cb = d.onOk;
+        state.dialog = null;
+        if (cb) cb();
+        render();
+      }, textContent: "OK" });
+
+      const iconNode = d.kind === "check"
+        ? h("img", { src: ICONS.check, alt: "", style: "width:24px;height:24px;flex:none" })
+        : h("div", { className: "sw-jop-ico" + (d.kind === "info" ? " info" : ""), textContent: d.kind === "info" ? "i" : "!" });
+
+      const mask = h("div", { className: "sw-modal-mask" }, [
+        h("div", { className: "sw-jop", role: "alertdialog", "aria-label": d.title }, [
+          h("div", { className: "sw-titlebar" }, [
+            h("span", { textContent: d.title }),
+            h("span", { style: "color:#666", textContent: "×" })
+          ]),
+          h("div", { className: "sw-jop-body" }, [
+            iconNode,
+            h("div", { textContent: d.message })
+          ]),
+          h("div", { className: "sw-jop-foot" }, [okBtn])
+        ])
+      ]);
+      stage.append(mask);
+      setTimeout(() => okBtn.focus({ preventScroll: true }), 0);
+    }
+
+    logPre.textContent = state.logs.join("\n");
+    logPre.scrollTop = logPre.scrollHeight;
+    userPre.textContent = state.users.join("\n");
+    userPre.scrollTop = userPre.scrollHeight;
+    logCount.textContent = state.logs.length + " rows";
+    userCount.textContent = state.users.length + " accounts";
+  }
+
+  tabs.forEach(t => t.addEventListener("click", () => switchWin(t.dataset.win)));
+  document.getElementById("sim-reset").addEventListener("click", () => { initState(); render(); });
+
+  initState();
+  render();
+})();
+</script>
+
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.esm.min.mjs";
+const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "neutral" });
+await mermaid.run({ querySelector: "pre.mermaid" });
+</script>
+</body>
+</html>
